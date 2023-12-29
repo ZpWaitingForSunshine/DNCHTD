@@ -3,7 +3,7 @@ Distributed Nonlocal Coupled Hierarchical Tucker Decomposition for Hyperspectral
 
 please cite
 
-、、、
+```
 @article{DBLP:journals/lgrs/ZhengSXZWPPW23,
   author       = {Peng Zheng and
                   Jin Sun and
@@ -25,4 +25,4 @@ please cite
   biburl       = {https://dblp.org/rec/journals/lgrs/ZhengSXZWPPW23.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
-、、、
+```
