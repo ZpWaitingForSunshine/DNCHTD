@@ -1,0 +1,59 @@
+function [S,W]=recomp_hosvd(c,X,W)
+
+switch c
+    
+    case 0 % Decomposition
+        
+    case 1 % Reconstruction
+        
+        N=length(W);
+        I=size(S);
+
+
+        for n=1:N
+            %SS{n}=reshape(S,I(1),prod(I(2:end)));
+            S=shiftdim(S,1);
+            I=size(S);
+        end
+
+        I1=size(S);
+        X1=S;
+        for n=1:N
+
+            XX= reshape(X1,I1(1),prod(I1(2:end)));
+
+            XX=W{n}*XX;
+
+            X1= reshape(XX,[size(W{n},1) I1(2:end)]);
+
+            X1=shiftdim(X1,1);
+            I1=size(X1);
+        end        
+end
+
+
+N=length(W);
+I=size(S);
+
+
+for n=1:N
+    %SS{n}=reshape(S,I(1),prod(I(2:end)));
+    S=shiftdim(S,1);
+    I=size(S);
+end
+
+I1=size(S);
+X1=S;
+for n=1:N
+    
+    XX= reshape(X1,I1(1),prod(I1(2:end)));
+    
+    XX=W{n}*XX;
+    
+    X1= reshape(XX,[size(W{n},1) I1(2:end)]);
+
+    X1=shiftdim(X1,1);
+    I1=size(X1);
+    
+end
+

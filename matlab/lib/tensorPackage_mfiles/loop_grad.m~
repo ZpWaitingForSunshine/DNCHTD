@@ -1,0 +1,60 @@
+function [L,res,lda_new]=loop_grad(L,T,lda_old)
+
+nbs= size(L{1},2);
+I=size(T); % tensor dimensions
+D=length(I); % tensor order (number of dimensions)
+
+% reshape data tensor
+Td=reshape(T,prod(I),1);
+
+% old error and cost function value
+p_old= zeros(sum(I)*nbs,1);
+x_old= ones(1,nbs);
+k=1;
+for i=1:D
+    p_old(k:k-1+I(i)*nbs)=vec(L{i}.');
+    x_old=pkr(L{i},x_old);
+    k=k+I(i)*nbs;
+end
+
+e_old= x_old*ones(nbs,1) - Td;
+f_old= e_old'*e_old/(2);
+f_new=2*f_old;
+lda_new=lda_old;
+    grad=construct_gradient(L,T);
+
+while f_new > f_old
+
+    % gradient vector
+
+    p_new= p_old -lda_new*grad;
+    % rebuild factor matrices
+    k=1;
+    for i=1:D
+        L_new{i}=unvec(p_new(k:k-1+I(i)*nbs),nbs,I(i)).';
+        k=k+I(i)*nbs;
+    end
+    % new error and cost function value
+    x_new=ones(1,nbs);
+    for i=1:D
+        x_new=pkr(L_new{i},x_new);
+    end
+    e_new= x_new*ones(nbs,1) - Td;
+    f_new= e_new'*e_new/(2);
+    % adjust the step size
+    val_ref=.005; %(cela force l'augmentation du pas lorsque f_new < f_old) %.005;
+    if f_new>= f_old
+        lda_new=lda_old/2;
+        lda_old=lda_new; % ajout� (car il faut garder lda_old pour le coup d'apr�s!)
+    elseif (f_old - f_new)/f_old < val_ref
+        lda_new=1.1*lda_old;
+        lda_old=lda_new;
+        L=L_new;
+    else
+        L=L_new;
+    end
+end
+res=e_new'*e_new/sum((Td(:)).^2);
+
+
+

@@ -1,0 +1,93 @@
+function [p,res]=els(T,K,N,F);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This function is part of the:                                    %% 
+%%                                                                  %%
+%% Tensor package v 1.0 (february 2011),                            %%
+%% Algorithms for the CP decomposition of multy-way arrays          %%
+%% X. Luciani, A.L.F de Almeida and P. Comon                        %%
+%%                                                                  %%
+%%                                                                  %%
+%%   v 1.0 features:                                                %%
+%%                                                                  %%
+%%   - Works whatever the tensor order                              %%
+%%   - Four optimization algorithms (see below)                     %%
+%%   - Enhanced Line Search procedure (ELS)                         %%
+%%   - Positivity constraint                                        %%
+%%   - High Order Singular Value Decomposition                      %%
+%%   - Deal with real or complex tensors                            %%
+%%                                                                  %%   
+%%   v 1.0 limitations:                                             %%
+%%                                                                  %%
+%%   - Only ALS works with complex tensor                           %%
+%%   - It seems that ELS doesn't work with tensors of order 5 and 7 %%
+%%   - This ELS code should not work fine with complex tensors      %%
+%%   - Positivity constraint only works with ALS                    %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%Enhanced Line Search
+
+% T is the tensor
+% N is the tensor order
+% F is the CP rank
+% K is a (2 x N) cell array: the first row contains the estimated loading
+% matrices, the second row contains the search direction corresponding to
+% each loading matrix
+
+%p is the optimal step in the global search direction
+
+C=coefpolykr(K,N,F);
+C=polymat(({K{1,2},K{1,1}}),C,0,-1);
+C{1}=T.'+C{1};
+C=polymat((C),C,1);
+Cd=fliplr(C(2:end).*[1:length(C)-1]);
+P=real(roots(Cd'));
+res1=polyval(fliplr(C),P);
+[a,b]=min(abs(res1));
+res=a/sum(abs(T(:)).^2);
+p=P(b);
+
+
+function C=coefpolykr(K,N,F);
+D=size(K,1);
+ind=ones(1,D-1);
+C={};
+for d1=1:D
+    C{D-d1+1}=zeros(N,F);
+    ind(1:d1-1)=2;
+    for d2=1:nchoosek(D-1,d1-1)
+        C{D-d1+1}=C{D-d1+1}+pkrec(K,ind);
+         %C{d1}=C{d1}+pkrec(K,ind);
+        ind=circshift(ind,[0,1]);
+    end
+end
+
+
+function Z=pkrec(L,ind);
+Z=L{size(L,1),ind(1)};
+for d=size(L,1)-1:-1:2
+    Z=pkr(Z,L{d,ind(d)});%ind(d-1)
+end
+
+
+function M=polymat(B,C,tr,si);
+I=length(C);
+J=length(B);
+for n=1:I+J-1
+    if tr==1
+        M(n)=trace([C{max(1,-J+n+1):min(I,n)}]*([B{min(J,n):-1:max(1,-I+n+1)}].'));
+    else
+    M{n}=si*[C{max(1,-J+n+1):min(I,n)}]*([B{min(J,n):-1:max(1,-I+n+1)}].');
+    end
+end
+
+
+
+
+
+    
+    
+    
