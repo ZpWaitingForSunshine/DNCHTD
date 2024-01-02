@@ -94,4 +94,3 @@ def myfun2(X, mu, rate, nn, s):
     re = 2 * ours + mu * X_
     return np.reshape(re, re.shape[0] * re.shape[1] * re.shape[2], order='F')
 
-

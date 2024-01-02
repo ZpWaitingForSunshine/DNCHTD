@@ -3,15 +3,15 @@ function [Out ]= Super_NCTCP(Ob,KK, Y,rate,s,PN,R)
 % no ground truth
 
 % input: 
-%     obï¿½ï¿½ observed LR-HSI
-%     KKï¿½ï¿½ rank number for CP decomposition
-%     Yï¿½ï¿½ observed  MSI
+%     ob£º observed LR-HSI
+%     KK£º rank number for CP decomposition
+%     Y£º observed  MSI
 %     rate:  enlarge rate
 %     s:    blurring kernel 
-%     PNï¿½ï¿½ number of patches in a cluster
+%     PN£º number of patches in a cluster
 %     R:    spectral response function
 % output:
-%     Outï¿½ï¿½fused  HR-HSI
+%     Out£ºfused  HR-HSI
  
 % solve min||Xn-HSX||_F+lambda*||Y-A*B'||_F
 % st. X=ABC
@@ -103,7 +103,7 @@ R2 = 20
 R3 = 9
 RB1 = 60
 
-th = 0.01
+theta = 0.0001
 
 HT= Ob;
 Z=Ob;
@@ -144,60 +144,62 @@ for i=1:L
     
   
     % U1 
-%     HH{i}.H{1}  = trainD( YSO1{i}{1}', YSO1{i}{1}',[],[],params);
-    HH{i}.H{1} =  rand( par.patsize*par.patsize, R1);
-    HH{i}.H{1} = HH{i}.H{1} / diag( sqrt( sum( HH{i}.H{1}.^2 ) ) );
+    HH{i}.H{1}  = trainD( YSO1{i}{1}', YSO1{i}{1}',[],[],params);
+%     HH{i}.H{1} =  rand( par.patsize*par.patsize, R1);
+%     HH{i}.H{1} = HH{i}.H{1} / diag( sqrt( sum( HH{i}.H{1}.^2 ) ) );
     % U2
     if i == L  & R2 > length(ind{i})
-%         params.dictsize = length(ind{i});  
-        
-        HH{i}.H{2} =  rand( length(ind{i}), length(ind{i}));
+        params.dictsize = length(ind{i});  
+%         
+%         HH{i}.H{2} =  rand( length(ind{i}), length(ind{i}));
     else
-%         params.dictsize = R2
-        HH{i}.H{2} =  rand( length(ind{i}), R2 );
+        params.dictsize = R2
+%         HH{i}.H{2} =  rand( length(ind{i}), R2 );
     end
-%     HH{i}.H{2}  = trainD( YSO1{i}{2}', YSO1{i}{2}',[],[],params);
-    HH{i}.H{2} = HH{i}.H{2} / diag( sqrt( sum( HH{i}.H{2}.^2 ) ) );
+    HH{i}.H{2}  = trainD( YSO1{i}{2}', YSO1{i}{2}',[],[],params);
+%     HH{i}.H{2} = HH{i}.H{2} / diag( sqrt( sum( HH{i}.H{2}.^2 ) ) );
     %U3
-%     params.dictsize = R3;
-%     HH{i}.H{3}  = trainD( SO1{3}', SO1{3}',[],[],params);
+    params.dictsize = R3;
+    HH{i}.H{3}  = trainD( SO1{3}', SO1{3}',[],[],params);
      
-    HH{i}.H{3} =  rand( size(Ob,3), R3 );
-    HH{i}.H{3} = HH{i}.H{3} / diag( sqrt( sum( HH{i}.H{3}.^2 ) ) );
+%     HH{i}.H{3} =  rand( size(Ob,3), R3 );
+%     HH{i}.H{3} = HH{i}.H{3} / diag( sqrt( sum( HH{i}.H{3}.^2 ) ) );
     %U4
-%      HH{i}.D = R *  HH{i}.H{3};
-    HH{i}.D =  rand( size(Npatch2,2), R3 );
-    HH{i}.D = HH{i}.D / diag( sqrt( sum( HH{i}.D.^2 ) ) );
+     HH{i}.D = R *  HH{i}.H{3};
+%     HH{i}.D =  rand( size(Npatch2,2), R3 );
+%     HH{i}.D = HH{i}.D / diag( sqrt( sum( HH{i}.D.^2 ) ) );
     
     %B1
 
     if i == L & R2 > length(ind{i})
-%         params.dictsize = RB1;
-%         tempD = trainD(YSO1{i}{3},YSO1{i}{3},[],[],params);
-%         tempB1 = (tempD' / kron( HH{i}.H{2},  HH{i}.H{1})')';
-%         HH{i}.B1 = reshape(tempB1, R1, length(ind{i}), RB1);
-        HH{i}.B1 =  rand( R1 * length(ind{i}), RB1);
-        HH{i}.B1 = HH{i}.B1 / diag( sqrt( sum( HH{i}.B1.^2 ) ) );
-        HH{i}.B1 = reshape(HH{i}.B1, R1, length(ind{i}), RB1);
+        params.dictsize = length(ind{i});
+        tempD = trainD(SO1{3},SO1{3},[],[],params);
+        tempB1 = (tempD' / kron( HH{i}.H{2},  HH{i}.H{1})')';
+        HH{i}.B1 = reshape(tempB1, R1, length(ind{i}), RB1);
+%         HH{i}.B1 =  rand( R1 * length(ind{i}), RB1);
+%         HH{i}.B1 = HH{i}.B1 / diag( sqrt( sum( HH{i}.B1.^2 ) ) );
+%         HH{i}.B1 = reshape(HH{i}.B1, R1, length(ind{i}), RB1);
     else
-%         params.dictsize = RB1;
-%         tempD = trainD(YSO1{i}{3},YSO1{i}{3},[],[],params);
-%         tempB1 = (tempD' / kron( HH{i}.H{2},  HH{i}.H{1})')';
-        HH{i}.B1 =  rand( R1 * R2, RB1);
-        HH{i}.B1 = HH{i}.B1 / diag( sqrt( sum( HH{i}.B1.^2 ) ) );
-        HH{i}.B1 = reshape( HH{i}.B1, R1, R2, RB1);
+        params.dictsize = RB1;
+        tempD = trainD(SO1{3}, SO1{3},[],[],params);
+        tempB1 = (tempD' / kron( HH{i}.H{2},  HH{i}.H{1})')';
+%         HH{i}.B1 =  rand( R1 * R2, RB1);
+%         HH{i}.B1 = HH{i}.B1 / diag( sqrt( sum( HH{i}.B1.^2 ) ) );
+        HH{i}.B1 = reshape( tempB1, R1, R2, RB1);
     end
     
     %B2
-    HH{i}.B2 =  rand( RB1, R3);
-    HH{i}.B2 = HH{i}.B2 / diag( sqrt( sum( HH{i}.B2.^2 ) ) );
+%     HH{i}.B2 =  rand( RB1, R3);
+%     HH{i}.B2 = HH{i}.B2 / diag( sqrt( sum( HH{i}.B2.^2 ) ) );
+    HH{i}.B2 = ((SO1{3}' / (double(tenmat(tensor(HH{i}.B1), 3)) * kron( HH{i}.H{2}',  HH{i}.H{1}')))' / HH{i}.H{3}')';
+%     ((right / mid)' / left')';
     
     M2{i}=zeros( size(HH{i}.D) );
 end
 
 
 
-for i=1: maxIter
+for i=1: 1
 
     HT_old=HT;
     Z_old=Z;  
@@ -206,7 +208,7 @@ for i=1: maxIter
     Ncur=zeros(size(Curpatch));
     W=  ones(size(Curpatch,1),size(Curpatch,3));
     
-    for id = 1 : L
+    for id =1 : L
         disp('-----------------------------------------------------------------')
         tt1=Curpatch(:,:,ind{id});
         tt1=permute(tt1,[1 3 2]);
@@ -216,18 +218,15 @@ for i=1: maxIter
         
         MM=matricize(Mtt1);
         
-
-        
-        
         % update U3
         
-
         Core = ttm(tensor( HH{id}.B1), { HH{id}.B2' }, [3]);
         K = double(tenmat(ttm(Core, {HH{id}.H{1}, HH{id}.H{2}}, [1, 2]), 3));
-        left = R' * R;
-        mid = K * K';
-        right = SO1{3}'* K'+ MM{3}'* K' / mu + R' * HH{id}.D + R' * M2{id} / mu;
+        left = mu *  R' * R + theta;
+        mid = mu * K * K';
+        right = mu * SO1{3}'* K'+ MM{3}'* K' + mu * R' * HH{id}.D + R' * M2{id} + theta * HH{id}.H{3};
         HH{id}.H{3} = sylvester(left, mid, right);
+        
         Core1 = ttm(tensor( HH{id}.B1), { HH{id}.B2' }, [3]);
         RMSE(double(tenmat(ttm(Core1, {HH{id}.H{1}, HH{id}.H{2},  HH{id}.H{3}}, [1 2 3]), 3)) - SO1{3}', 0)
 %         
@@ -242,8 +241,6 @@ for i=1: maxIter
         Core1 = ttm(tensor( HH{id}.B1), { HH{id}.B2' }, [3]);
         RMSE(double(tenmat(ttm(Core1, {HH{id}.H{1}, HH{id}.H{2},  HH{id}.H{3}}, [1 2 3]), 3)) - SO1{3}', 0)
 
-        
-        
                 % update B2
       
         K = double(tenmat(ttm(tensor(HH{id}.B1), {HH{id}.H{1}, HH{id}.H{2}}, [1, 2]), 3))';

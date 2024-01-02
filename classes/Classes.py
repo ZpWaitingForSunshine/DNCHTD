@@ -1,12 +1,23 @@
 class Factor:
-    def __init__(self, U1, U2, U3, U4):
+    # def __init__(self, U1, U2, U3, U4):
+    #     self.U1 = U1
+    #     self.U2 = U2
+    #     self.U3 = U3
+    #     self.U4 = U4
+        # self.M2 = M2
+    def setFactors(self, U1, U2, U3, U4, B1, B2, M2):
         self.U1 = U1
         self.U2 = U2
         self.U3 = U3
+        self.B1 = B1
         self.U4 = U4
-        # self.M2 = M2
-
-
+        self.B2 = B2
+        self.M2 = M2
+    def __init__(self, R1, R2, R3, RB1):
+        self.R1 = R1
+        self.R2 = R2
+        self.R3 = R3
+        self.RB1 = RB1
 class Patch:
     def __init__(self, Indices, Rank, time):
         self.Indices = Indices

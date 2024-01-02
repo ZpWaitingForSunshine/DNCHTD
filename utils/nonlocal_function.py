@@ -4,17 +4,6 @@ from utils.tensor_function import tensor_mode_unfolding
 from utils.tools import calEuclidean
 
 
-def Im2Patch3D(Video, patsize:int, step:int):
-    TotalPatNum = int((np.floor((Video.shape[0] - patsize) / step) + 1) * \
-                  (np.floor((Video.shape[1] - patsize) / step) + 1))
-    Y = np.zeros((int(patsize * patsize), Video.shape[2], TotalPatNum))
-    k = 0
-    for i in range(patsize):
-        for j in range(patsize):
-            tempPatch = Video[i: Video.shape[0] - patsize + i + 1: step, j: Video.shape[1] - patsize + j + 1: step, :]
-            Y[k, :, :] = tensor_mode_unfolding(tempPatch, mode=2)
-            k = k + 1
-    return Y
 
 
 # arr is an 1xN array
@@ -70,22 +59,37 @@ def knn2(indices, rows, cols, Pstepsize, index, Y):
 
 def indices2Patch(img, indices, Pstepsize, rows, cols):
 
-    Patch = np.zeros((Pstepsize, Pstepsize, img.shape[2], len(indices)))
+    Patch = np.zeros((Pstepsize * Pstepsize, img.shape[2], len(indices)))
     for i in range(len(indices)):
         row = int(indices[i] % rows)
         col = int((indices[i] - row) / rows)
         patch = img[row: row + Pstepsize, col: col + Pstepsize, :]
-        cube = np.transpose(patch, [1, 0, 2])
-        Patch[:, :, :, i] = cube
+        cube = np.reshape(patch, [Pstepsize * Pstepsize, img.shape[2]])
+        # cube = np.transpose(patch, [1, 0, 2])
+        # cube =
+        Patch[:, :, i] = cube
     return Patch
 
+def Im2Patch3D(Video, patsize:int, step:int):
+    TotalPatNum = int((np.floor((Video.shape[0] - patsize) / step) + 1) * \
+                  (np.floor((Video.shape[1] - patsize) / step) + 1))
+    Y = np.zeros((int(patsize * patsize), Video.shape[2], TotalPatNum))
+    k = 0
+    for i in range(patsize):
+        for j in range(patsize):
+            tempPatch = Video[i: Video.shape[0] - patsize + i + 1: step, j: Video.shape[1] - patsize + j + 1: step, :]
+            Y[k, :, :] = tensor_mode_unfolding(tempPatch, mode=2)
+            k = k + 1
+    return Y
 
-def getW_Imge_Matrix(nn, rows, cols, zindexs, patsize, Vpatsize):
+
+
+def getW_Imge_Matrix(nn, rows, cols, patsize):
     W_Img = np.zeros([nn[0], nn[1]])
-    for index in range(int(rows * cols * zindexs)):
-        row = int(index % (rows * zindexs)) # 行
+    for index in range(int(rows * cols)):
+        row = int(index % (rows)) # 行
         col = int((index - row) / rows) # 列
-        z = int(z)
+        # z = int(z)
         W_Img[row: patsize + row, col: patsize + col] = \
             W_Img[row: patsize + row, col: patsize + col] + np.ones((patsize, patsize))
 

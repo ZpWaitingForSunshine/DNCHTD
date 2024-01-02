@@ -8,7 +8,7 @@ dir = "/data2/data/"
 system = platform.system()
 print(system)
 if system == "Windows":
-    dir = "C:/Users/admin/Desktop/DPN4CTCP/data/"
+    dir = "./data/"
 
 if system == "Darwin":
     dir = "./data/"
@@ -51,9 +51,9 @@ def readData(filename):
     I_HSn = gaussian(HH, s)
     HSI = downsample(I_HSn, 5)
 
-    HH = np.repeat(HH[..., np.newaxis], frames, axis=3)
-    HSI = np.repeat(HSI[..., np.newaxis], frames, axis=3)
-    MSI = np.repeat(MSI[..., np.newaxis], frames, axis=3)
+    # HH = np.repeat(HH[..., np.newaxis], frames, axis=3)
+    # HSI = np.repeat(HSI[..., np.newaxis], frames, axis=3)
+    # MSI = np.repeat(MSI[..., np.newaxis], frames, axis=3)
 
     return HH, MSI, HSI, R
 
