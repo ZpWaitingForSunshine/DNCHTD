@@ -93,9 +93,9 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
 
     # 创建MatrixSumActor的实例，每个Actor存储一个矩阵
     factorActors = []
-    factorActors = [FactorActor.remote(item, Y_ref, patsize, rows, cols, nn) for item in k1]
-    # for i in range(len(k1)):
-    #     factorActors.append(FactorActor(k1[i], Y, patsize, rows, cols, nn))
+    # factorActors = [FactorActor.remote(item, Y_ref, patsize, rows, cols, nn, KK) for item in k1]
+    for i in range(len(k1)):
+        factorActors.append(FactorActor(k1[i], Y, patsize, rows, cols, nn, KK))
 
     # factorActors = FactorActor(k1[0], Y, patsize, rows, cols, nn)
     HT = Ob
@@ -106,22 +106,26 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
 
         t3 = time.time()
         # update factors
-        ray.get([actor.updateFactors.remote(X_ref, patsize,
-                          rows, cols, M1_ref, Y_ref, lda, mu, R, nn) for actor in factorActors])
+        # ray.get([actor.updateFactors.remote(X_ref, patsize,
+        #                   rows, cols, M1_ref, Y_ref, lda, mu, R, nn) for actor in factorActors])
         # # fold_actors = [actor.reduce.remote() for actor in factorActors]
-        # for kk in range(len(factorActors)):
-        #     factorActors[kk].updateFactors(Ob, patsize,
-        #                   rows, cols, M1, Y, lda, mu, R, nn)
+        HT = np.zeros(nn)
+        for kk in range(len(factorActors)):
+            HT = HT + factorActors[kk].updateFactors(Ob, patsize,
+                          rows, cols, M1, Y, lda, mu, R, nn)
 
 
         t4 = time.time()
         time_group = time_group + t4 - t3
 
-        pieceHSI = [actor.getEimg.remote() for actor in factorActors]
+        # for i in range(len(factorActors)):
+        #     print()
+
+        # pieceHSI = [actor.getEimg.remote() for actor in factorActors]
 
         t31 = time.time()
         # ray.get([actor.updateEimg.remote(parameterServerActor) for actor in factorActors])
-        HT = ray.get(parameterServerActor.put_HR_HSI.remote(*pieceHSI)).copy()
+        # HT = ray.get(parameterServerActor.put_HR_HSI.remote(*pieceHSI)).copy()
         print("HT更新结束")
         # HT = ray.get(parameterServerActor.get_HR_HSI)
 
@@ -136,8 +140,8 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
         # HT = ray.get(parameterServerActor.get_HR_HSI.remote())
         for band in range(nn[2]):
             HT[:, :, band] = HT[:, :, band] / (W_Img + np.finfo(float).eps)
-        # plt.imshow(HT[:, :, 1:4])
-        # plt.show()
+        plt.imshow(HT[:, :, 1:4])
+        plt.show()
 
         rr = 2 * Ob + mu * HT - M1
         rr_ref = ray.put(rr)

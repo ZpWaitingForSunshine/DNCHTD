@@ -3,15 +3,15 @@ function [Out ]= Super_NCTCP(Ob,KK, Y,rate,s,PN,R)
 % no ground truth
 
 % input: 
-%     obï¿½ï¿½ observed LR-HSI
-%     KKï¿½ï¿½ rank number for CP decomposition
-%     Yï¿½ï¿½ observed  MSI
+%     ob£º observed LR-HSI
+%     KK£º rank number for CP decomposition
+%     Y£º observed  MSI
 %     rate:  enlarge rate
 %     s:    blurring kernel 
-%     PNï¿½ï¿½ number of patches in a cluster
+%     PN£º number of patches in a cluster
 %     R:    spectral response function
 % output:
-%     Outï¿½ï¿½fused  HR-HSI
+%     Out£ºfused  HR-HSI
  
 % solve min||Xn-HSX||_F+lambda*||Y-A*B'||_F
 % st. X=ABC
@@ -206,7 +206,7 @@ for i=1: maxIter
     Ncur=zeros(size(Curpatch));
     W=  ones(size(Curpatch,1),size(Curpatch,3));
     
-    for id = 1 : L
+    for id =1 : L
         disp('-----------------------------------------------------------------')
         tt1=Curpatch(:,:,ind{id});
         tt1=permute(tt1,[1 3 2]);

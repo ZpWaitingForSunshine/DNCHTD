@@ -61,6 +61,9 @@ class SparseTensor:
     def addData(self, data):
         self.data = data
 
+    def addM(self, M):
+        self.M = M
+
 class Parameters:
     def __init__(self):
         self.mu = 1e-4

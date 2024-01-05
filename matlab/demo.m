@@ -1,3 +1,4 @@
+
 % load data
 % clear
 % close all
@@ -27,10 +28,10 @@ mband=4;
 % I_REF=imread('original_rosis.tif');
 % % I_REF=imread('dc5.tif');
 % 
-%  I_REF=double(I_REF);
+% I_REF=double(I_REF);
 % % % 
-%  load LANDSAT.mat
-%  R=R(1:mband,1:size(I_REF,3));
+% load LANDSAT.mat
+% R=R(1:mband,1:size(I_REF,3));
 % 
     I_REF=imread('dc.tif');
 %     I_REF=double(I_REF(861:1280, 1:300,:));
@@ -71,7 +72,7 @@ tic
 %% running test
 % proposed method
 tic
-[I_CTD] = Super_NCTHT_PAO_r(I_HS,120,I_MSI,ratio,s,80,R);
+[I_CTD] = Super_NCTHT_PAO_r(I_HS,120,I_MSI,ratio,s,60,R);
 % [I_CTD] = Super_NCTCP(I_HS,180,I_MSI,ratio,s,32,R);
 time_CTD=toc
 QI_CTD = QualityIndices(I_CTD,I_REF,ratio); % measure cc, sam0, rmse, ergas
@@ -79,3 +80,9 @@ AM=max(I_REF(:));
 psnr_CTD    =  PSNR3D(I_CTD*255/AM,I_REF*255/AM);
 disp(psnr_CTD);
 toc
+
+
+% imm = I_CTD;
+% imm = imm(:,:,[70, 30 , 5]);
+% imshow(imm)
+% imwrite(imm, 'loo.png');

@@ -11,14 +11,16 @@ from utils.tensor_function import HT_recover, matricize, ktensor, ttm, calu3TTM,
 
 from scipy.sparse import csr_matrix
 
-@ray.remote(num_cpus=2)
+# @ray.remote(num_cpus=2)
 class FactorActor:
-    def __init__(self, k1, Y, patsize, rows, cols, nn, rank=[20, 200, 30, 30]):
+    def __init__(self, k1, Y, patsize, rows, cols, nn, rank):
         print("init factors")
         self.parDatalist = []
         # print(len(k1))
         patchList = [] #
         self.E_Img = np.zeros(nn)
+
+        # self.M = np.zeros(nn)
 
         for i in range(len(k1)):
             patch = Patch(k1[i].astype(int), rank, 0)
@@ -96,7 +98,7 @@ class FactorActor:
         patchlist = self.parDatalist
         print("开始更新因子矩阵")
         curPatchlist = []
-        theta = 0.001
+        theta = 0.0001
         for patch in patchlist:
             ind = patch.Indices
             # print(ind)
@@ -126,36 +128,48 @@ class FactorActor:
             B2 = patch.factor.B2
             M2 = patch.factor.M2
 
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print(np.linalg.norm(cur - Ytt1))
+
+            B2 = updateB2(U1, U2, U3, U4, B1, B2, YSO1[2], SO1[2], MM2[2], mu, lda, theta)
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print("Y", np.linalg.norm(cur - Ytt1))
             cur = HT_recover(U1, U2, U3, B1, B2)
-            print(np.linalg.norm(cur - tt1))
+            print("ZX", np.linalg.norm(cur - tt1))
+
+            # B2[B2 < 0] = 0
+            B1 = updateB1(U1, U2, U3, U4, B1, B2, Ytt1, tt1, Mtt1, mu, lda, theta)
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print(np.linalg.norm(cur - Ytt1))
+            # B1[B1 < 0] = 0
+
+            U2 = updateU2(U1, U2, U3, U4, B1, B2, YSO1[1], SO1[1], MM2[1], mu, lda, theta)
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print(np.linalg.norm(cur - Ytt1))
 
 
             U1 = updateU1(U1, U2, U3, U4, B1, B2, YSO1[0], SO1[0], MM2[0], mu, lda, theta)
-            cur = HT_recover(U1, U2, U3, B1, B2)
-            print(np.linalg.norm(cur - tt1))
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print(np.linalg.norm(cur - Ytt1))
+
             # U2
 
-            U2 = updateU2(U1, U2, U3, U4, B1, B2, YSO1[1], SO1[1], MM2[1], mu, lda, theta)
-            cur = HT_recover(U1, U2, U3, B1, B2)
-            print(np.linalg.norm(cur - tt1))
 
             U3 = updateU3(U1, U2, U3, U4, B1, B2, SO1[2], MM2[2], mu, theta, R, M2)
-            cur = HT_recover(U1, U2, U3, B1, B2)
-            print(np.linalg.norm(cur - tt1))
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print(np.linalg.norm(cur - Ytt1))
 
-            B1 = updateB1(U1, U2, U3, U4, B1, B2, Ytt1, tt1, Mtt1, mu, lda, theta)
-            cur = HT_recover(U1, U2, U3, B1, B2)
-            print(np.linalg.norm(cur - tt1))
-            # U4
             U4 = updateU4(U1, U2, U3, U4, B1, B2, YSO1[2], mu, theta, lda, R, M2)
+            cur = HT_recover(U1, U2, U4, B1, B2)
+            print(np.linalg.norm(cur - Ytt1))
 
 
 
-            # B2 = updateB2(U1, U2, U3, U4, B1, B2, YSO1[2], SO1[2], MM2[2], mu, lda, theta)
 
 
-            cur = HT_recover(U1, U2, U3, B1, B2)
-            print(np.linalg.norm(cur - tt1))
+
+
+
 
             print()
 
@@ -165,7 +179,7 @@ class FactorActor:
             patch.factor.setFactors(U1, U2, U3, U4, B1, B2, M2)
             patches = HT_recover(U1, U2, U3, B1, B2)
             patches = np.transpose(patches, (0, 2, 1))
-
+            # patches = np.transpose(tt1, (0, 2, 1))
             for ind_cur, index in enumerate(indices):
                 row = int(index % rows)
                 col = int((index - row) / rows)
@@ -181,8 +195,8 @@ class FactorActor:
         time_end = time.time()
         print("upate 分区更新完成，用时%f秒" % (time_end - time_start))
 
-        plt.imshow(E_Img[:, :, 1:4])
-        plt.show()
+        # plt.imshow(E_Img[:, :, 1:4])
+        # plt.show()
         # sparse
 
         sparseTensor = SparseTensor()
@@ -193,18 +207,22 @@ class FactorActor:
         for i in range(nn[2]):
             print(E_Img[:, :, i].shape)
             csr = csr_matrix(E_Img[:, :, i])
+            # csr_M =
             sparseTensor.addIndices(csr.indices)
             sparseTensor.addOffset(csr.indptr)
             data.append(csr.data)
+
+
         sparseTensor.addData(data)
         #
 
-        print("零占比：", 1 - np.count_nonzero(E_Img[:, :, 0]) / nn[0] / nn[1])
+        # print("零占比：", 1 - np.count_nonzero(E_Img[:, :, 0]) / nn[0] / nn[1])
 
         # self.E_Img = E_Img
         # return E_Img
-        self.E_Img = sparseTensor
-
+        # self.E_Img = sparseTensor
+        self.E_Img = E_Img
+        return E_Img
     def reduce(self, data):
         self.E_Img = self.E_Img + data
 

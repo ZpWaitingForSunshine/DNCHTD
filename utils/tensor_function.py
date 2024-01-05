@@ -83,15 +83,20 @@ def updateU1(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
     # update U1
     Core = tl.tenalg.mode_dot(B1, U2, mode=1)
     Core = tl.tenalg.mode_dot(Core, B2.T, mode=2)
+
     A = tl.tenalg.mode_dot(Core, U4, mode=2)
     A = tl.unfold(A, mode=0)
     B = tl.tenalg.mode_dot(Core, U3, mode=2)
     B = tl.unfold(B, mode=0)
-    left_U1 = 2 * lda * np.dot(Y, A.T) + np.dot(mu * X + M, B.T) + \
-              2 * theta * U1
-    right_U1 = 2 * lda * np.dot(A, A.T) + mu * np.dot(B, B.T) + \
-               2 * theta * np.eye(B.shape[0])
-    U1 = np.dot(left_U1, np.linalg.pinv(right_U1))
+
+
+    right = 2 * lda * np.dot(Y, A.T) + np.dot(mu * X + M, B.T) + \
+              theta * U1
+
+
+    left = 2 * lda * np.dot(A, A.T) + mu * np.dot(B, B.T) + \
+                theta * np.eye(B.shape[0])
+    U1 = np.dot(right, np.linalg.inv(left))
     return U1
     # cur = HT_recover(U1, U2, U3, B1, B2)
     # print(np.linalg.norm(cur - tt1))
@@ -99,6 +104,8 @@ def updateU1(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
 def updateU2(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
     Core = tl.tenalg.mode_dot(B1, U1, mode=0)
     Core = tl.tenalg.mode_dot(Core, B2.T, mode=2)
+
+
     A = tl.tenalg.mode_dot(Core, U4, mode=2)
     A = tl.unfold(A, mode=1)
 
@@ -106,9 +113,9 @@ def updateU2(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
     B = tl.unfold(B, mode=1)
 
     left_U2 = 2 * lda * np.dot(Y, A.T) + np.dot(mu * X + M, B.T) + \
-              2 * theta * U2
+              theta * U2
     right_U2 = 2 * lda * np.dot(A, A.T) + mu * np.dot(B, B.T) + \
-               2 * theta * np.eye(B.shape[0])
+               theta * np.eye(B.shape[0])
 
     U2 = np.dot(left_U2, np.linalg.pinv(right_U2))
     return U2

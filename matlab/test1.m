@@ -1,0 +1,10 @@
+warning('off');
+demo_batch(50)
+demo_batch(55)
+demo_batch(60)
+demo_batch(65)
+demo_batch(70)
+demo_batch(75)
+demo_batch(80)
+demo_batch(85)
+demo_batch(90)

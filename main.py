@@ -24,17 +24,17 @@ if __name__ == '__main__':
     # read data 读取数据
     I_REF, MSI, HSI, R = readData('DC50')
 
-    PN = 300
+    PN = 60
     Rank = 1
     ratio = 5
     s = loads()
     t1 = time.time()
 
-    KK = 80
+    KK = [24, 50, 35, 35]
 
     rate = 5
-    maxIter = 1
-    num = 1
+    maxIter = 10
+    num = 5
 
     I_CTD = demo(HSI, KK, MSI, rate, PN, R, s, maxIter, num)
 
@@ -49,5 +49,3 @@ if __name__ == '__main__':
 
     with open(filename, 'wb') as file:
         pickle.dump(I_CTD, file)
-
-

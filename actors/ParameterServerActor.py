@@ -3,7 +3,7 @@ import time
 import ray
 import numpy as np
 from scipy.sparse import csr_matrix
-
+import matplotlib.pyplot as plt
 @ray.remote
 class ParameterServerActor(object):
     def __init__(self, nn):
@@ -28,6 +28,8 @@ class ParameterServerActor(object):
         t2 = time.time()
         print("合并花了", t2 - t1, " s")
         print("尺寸", self.HR_HSI.shape)
+        # plt.imshow(self.HR_HSI[:, :, 1-4])
+        # plt.show()
         return self.HR_HSI
         # self.net.apply_gradients(np.mean(gradients, axis=0))
         # return self.net.variables.get_flat()
