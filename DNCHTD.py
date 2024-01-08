@@ -3,6 +3,8 @@ import sys
 import time
 
 import pickle
+
+import h5py
 import numpy as np
 import ray
 import matplotlib.pyplot as plt
@@ -66,6 +68,13 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
 
     k1 = group(PN, num, rows, cols, patsize, Y_ref)
 
+    # hf = h5py.File("./data/k1.mat", 'r')
+    # kkkk = np.array(hf["k1"])
+    # k1 = list()
+    # k1.append(list())
+    # for i in range(18):
+    #     k1[0].append(np.where(kkkk == i + 1)[1])
+
     # if(os.path.exists("./k1")):
     #     with open('./k1', 'rb') as f:
     #         k1 = pickle.load(f)
@@ -84,6 +93,13 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
             #     with open('./k', 'wb') as file:
             #         pickle.dump(K1, file)
 
+    # k1[0][0] = np.array([1, 2, 3, 4, 909, 910, 911, 953, 954, 955, 956, 995, 996, 997, 998,
+    #        999, 1000, 1001, 1002, 1003, 1039, 1040, 1041, 1042, 1043, 1044,
+    #        1045, 1046, 1047, 1048, 1049, 1084, 1085, 1086, 1087, 1092, 1093,
+    #        1094, 1095, 1130, 1132, 1133, 1134, 1135, 1136, 1137, 1178, 1179,
+    #        1390, 1416, 1436, 1462, 1482, 1508, 1528, 1554, 1574, 1600, 1620,
+    #        1646] - np.ones(60))
+
 
     t2 = time.time()
 
@@ -93,9 +109,9 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
 
     # 创建MatrixSumActor的实例，每个Actor存储一个矩阵
     factorActors = []
-    # factorActors = [FactorActor.remote(item, Y_ref, patsize, rows, cols, nn, KK) for item in k1]
-    for i in range(len(k1)):
-        factorActors.append(FactorActor(k1[i], Y, patsize, rows, cols, nn, KK))
+    factorActors = [FactorActor.remote(item, Y_ref, patsize, rows, cols, nn, KK) for item in k1]
+    # for i in range(len(k1)):
+    #     factorActors.append(FactorActor(k1[i], Y, patsize, rows, cols, nn, KK))
 
     # factorActors = FactorActor(k1[0], Y, patsize, rows, cols, nn)
     HT = Ob
@@ -106,13 +122,13 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
 
         t3 = time.time()
         # update factors
-        # ray.get([actor.updateFactors.remote(X_ref, patsize,
-        #                   rows, cols, M1_ref, Y_ref, lda, mu, R, nn) for actor in factorActors])
+        ray.get([actor.updateFactors.remote(X_ref, patsize,
+                          rows, cols, M1_ref, Y_ref, lda, mu, R, nn) for actor in factorActors])
         # # fold_actors = [actor.reduce.remote() for actor in factorActors]
-        HT = np.zeros(nn)
-        for kk in range(len(factorActors)):
-            HT = HT + factorActors[kk].updateFactors(Ob, patsize,
-                          rows, cols, M1, Y, lda, mu, R, nn)
+        # HT = np.zeros(nn)
+        # for kk in range(len(factorActors)):
+        #     HT = HT + factorActors[kk].updateFactors(Ob, patsize,
+        #                   rows, cols, M1, Y, lda, mu, R, nn)
 
 
         t4 = time.time()
@@ -121,11 +137,11 @@ def demo(Ob, KK, Y, rate, PN, R, s, maxIter, num):
         # for i in range(len(factorActors)):
         #     print()
 
-        # pieceHSI = [actor.getEimg.remote() for actor in factorActors]
+        pieceHSI = [actor.getEimg.remote() for actor in factorActors]
 
         t31 = time.time()
         # ray.get([actor.updateEimg.remote(parameterServerActor) for actor in factorActors])
-        # HT = ray.get(parameterServerActor.put_HR_HSI.remote(*pieceHSI)).copy()
+        HT = ray.get(parameterServerActor.put_HR_HSI.remote(*pieceHSI)).copy()
         print("HT更新结束")
         # HT = ray.get(parameterServerActor.get_HR_HSI)
 

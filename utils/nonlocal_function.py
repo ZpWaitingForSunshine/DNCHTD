@@ -63,6 +63,8 @@ def indices2Patch(img, indices, Pstepsize, rows, cols):
     for i in range(len(indices)):
         row = int(indices[i] % rows)
         col = int((indices[i] - row) / rows)
+        # col = int(indices[i] % cols)
+        # row = int((indices[i] - col) / cols)
         patch = img[row: row + Pstepsize, col: col + Pstepsize, :]
         cube = np.reshape(patch, [Pstepsize * Pstepsize, img.shape[2]])
         # cube = np.transpose(patch, [1, 0, 2])

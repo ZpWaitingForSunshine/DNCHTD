@@ -37,19 +37,25 @@ from utils.tensor_function import ttm
 U1 = np.random.random([110, 10])
 U2 = np.random.random([120, 20])
 U3 = np.random.random([130, 30])
-B1 = np.random.random([10, 20, 40])
-B2 = np.random.random([40, 30])
+B1 = np.random.random([10, 20, 30])
+B2 = np.random.random([30, 30])
 
 a = tl.tenalg.mode_dot(B1, U1, mode=0)
 a = tl.tenalg.mode_dot(a, U2, mode=1)
-a = tl.tenalg.mode_dot(a, B2.T, mode=2)
+# a = tl.tenalg.mode_dot(a, B2.T, mode=2)
 a = tl.tenalg.mode_dot(a, U3, mode=2)
 c = a
 
+#
+h = tl.tenalg.mode_dot(B1, U1, mode=0)
+h = tl.tenalg.mode_dot(h, U2, mode=1)
+# h = tl.tenalg.mode_dot(h, np.dot(B2, U3.T).T, mode=2)
+h = np.dot(U3, tl.unfold(h, mode=2))
+i = tl.fold(h, mode=2, shape=a.shape)
+j = tl.unfold(i, mode=2)
 
-a = tl.tenalg.mode_dot(B1, U1, mode=0)
-a = tl.tenalg.mode_dot(a, U2, mode=1)
-a = tl.tenalg.mode_dot(a, np.dot(B2, U3.T).T, mode=2)
+
+
 
 b = tl.tenalg.mode_dot(B1, U2, mode=1)
 b = tl.tenalg.mode_dot(b, B2.T, mode=2)
@@ -61,12 +67,19 @@ b = tl.tenalg.mode_dot(b, U1, mode=0)
 
 
 c = tl.unfold(a, mode=0)
-d = np.dot(U1, tl.unfold(b, mode=0))
+# d = np.dot(U1, tl.unfold(b, mode=0))
+
+
+e = tl.fold(c, mode=0, shape=a.shape)
+
+
+f = tl.unfold(a, mode=1)
+g = tl.fold(f, mode=1, shape=a.shape)
 
 
 
 
-print()
+print(np.sum(a - g))
 
 
 

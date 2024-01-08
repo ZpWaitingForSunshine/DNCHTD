@@ -22,19 +22,19 @@ if __name__ == '__main__':
     #          runtime_env={"working_dir": "./"})
     ray.init()
     # read data 读取数据
-    I_REF, MSI, HSI, R = readData('DC50')
+    I_REF, MSI, HSI, R = readData('DC')
 
-    PN = 60
+    PN = 90
     Rank = 1
     ratio = 5
     s = loads()
     t1 = time.time()
 
-    KK = [24, 50, 35, 35]
+    KK = [24, 80, 35, 35]
 
     rate = 5
     maxIter = 10
-    num = 5
+    num = 1
 
     I_CTD = demo(HSI, KK, MSI, rate, PN, R, s, maxIter, num)
 

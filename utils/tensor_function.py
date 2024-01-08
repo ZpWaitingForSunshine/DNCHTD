@@ -7,6 +7,7 @@ def tensor_mode_unfolding(tensor, mode):
     mode_unfolded = np.moveaxis(tensor, mode, 0)
     mode_unfolded = np.reshape(mode_unfolded, (shape[mode], -1), order='F')
     return mode_unfolded
+    # return tl.unfold(tensor, mode)
 
 
 def matricize(tensor):
@@ -83,11 +84,11 @@ def updateU1(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
     # update U1
     Core = tl.tenalg.mode_dot(B1, U2, mode=1)
     Core = tl.tenalg.mode_dot(Core, B2.T, mode=2)
-
+    # tensor_mode_unfolding(tensor, mode=i)
     A = tl.tenalg.mode_dot(Core, U4, mode=2)
-    A = tl.unfold(A, mode=0)
+    A = tensor_mode_unfolding(A, mode=0)
     B = tl.tenalg.mode_dot(Core, U3, mode=2)
-    B = tl.unfold(B, mode=0)
+    B = tensor_mode_unfolding(B, mode=0)
 
 
     right = 2 * lda * np.dot(Y, A.T) + np.dot(mu * X + M, B.T) + \
@@ -107,10 +108,10 @@ def updateU2(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
 
 
     A = tl.tenalg.mode_dot(Core, U4, mode=2)
-    A = tl.unfold(A, mode=1)
+    A = tensor_mode_unfolding(A, mode=1)
 
     B = tl.tenalg.mode_dot(Core, U3, mode=2)
-    B = tl.unfold(B, mode=1)
+    B = tensor_mode_unfolding(B, mode=1)
 
     left_U2 = 2 * lda * np.dot(Y, A.T) + np.dot(mu * X + M, B.T) + \
               theta * U2
@@ -124,17 +125,31 @@ def updateU2(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
 
 def updateU3(U1, U2, U3, U4, B1, B2, X, M, mu, theta, R, F):
     # U3
-    Core = tl.tenalg.mode_dot(B1, U2, mode=1)
-    Core = tl.tenalg.mode_dot(Core, U1, mode=0)
-    Core = tl.tenalg.mode_dot(Core, B2.T, mode=2)
-    # b = tl.tenalg.mode_dot(b, U3, mode=2)
-    Core = tl.unfold(Core, mode=2)
-    right_U3 = mu * np.dot(X + M / mu, Core.T) + \
-               mu * np.dot(R.T, U4 + F / mu) + 2 * theta * U3
-    left_U3 = mu * np.dot(R.T, R) + 2 * theta * np.eye(R.shape[1])
-    mid_U3 = np.dot(Core, Core.T)
 
-    U3 = sl.solve_sylvester(left_U3, mid_U3, right_U3)
+    core = tl.tenalg.mode_dot(B1, B2.T, mode=2)
+    core = tl.tenalg.mode_dot(core, U2, mode=1)
+    core = tl.tenalg.mode_dot(core, U1, mode=0)
+    A = tensor_mode_unfolding(core, mode=2)
+    # A = tl.unfold(core, mode=2)
+
+    right1 = np.dot(R.T, R) * mu
+    right2 = mu * np.dot(A, A.T) + 2 * theta * np.eye(A.shape[0])
+    left = mu * np.dot(X + M / mu, A.T) + mu * np.dot(R.T, U4 + F / mu) + 2 * theta * U3
+
+    U3 = sl.solve_sylvester(right1, right2, left)
+
+
+    # Core = tl.tenalg.mode_dot(B1, U2, mode=1)
+    # Core = tl.tenalg.mode_dot(Core, U1, mode=0)
+    # Core = tl.tenalg.mode_dot(Core, B2.T, mode=2)
+    # # b = tl.tenalg.mode_dot(b, U3, mode=2)
+    # Core = tensor_mode_unfolding(Core, mode=2)
+    # right_U3 = mu * np.dot(X + M / mu, Core.T) + \
+    #            mu * np.dot(R.T, U4 + F / mu) + 2 * theta * U3
+    # left_U3 = mu * np.dot(R.T, R) + 2 * theta * np.eye(R.shape[1])
+    # mid_U3 = np.dot(Core, Core.T)
+    #
+    # U3 = sl.solve_sylvester(left_U3, mid_U3, right_U3)
     return U3
 
 
@@ -143,7 +158,7 @@ def updateU4(U1, U2, U3, U4, B1, B2, Y, mu, theta, lda, R, F):
     Core = tl.tenalg.mode_dot(Core, U1, mode=0)
     Core = tl.tenalg.mode_dot(Core, B2.T, mode=2)
     # Core = tl.tenalg.mode_dot(Core, U4, mode=2)
-    Core = tl.unfold(Core, mode=2)
+    Core = tensor_mode_unfolding(Core, mode=2)
     left_U4 = 2 * lda * np.dot(Y, Core.T) + \
               mu * np.dot(R, U3) - F + 2 * theta * U4
     right_U4 = 2 * lda * np.dot(Core, Core.T) + \
@@ -159,13 +174,13 @@ def updateU4(U1, U2, U3, U4, B1, B2, Y, mu, theta, lda, R, F):
 def updateB2(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
     Core = tl.tenalg.mode_dot(B1, U2, mode=1)
     Core = tl.tenalg.mode_dot(Core, U1, mode=0)
-    Core = tl.unfold(Core, mode=2)
+    Core = tensor_mode_unfolding(Core, mode=2)
     A = np.dot(Core, Core.T)
     B = 2 * lda * np.dot(U4.T, U4)
     C = mu * np.dot(U3.T, U3)
     D = 2 * lda * np.dot(np.dot(Core, Y.T), U4) + mu * np.dot(np.dot(Core, M.T / mu + X.T), U3) + 2 * theta * B2
     temp = np.linalg.solve(np.kron(B.T + C.T, A) + theta * np.eye(B.shape[0] * A.shape[0]), tl.tensor_to_vec(D.T))
-    return np.reshape(temp, B2.shape)
+    return np.reshape(temp, B2.shape).T
 
 
 def updateB1(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
@@ -173,40 +188,75 @@ def updateB1(U1, U2, U3, U4, B1, B2, Y, X, M, mu, lda, theta):
     C2 = B1
     C1 = C2
     V1 = np.zeros(C1.shape)
-    for i in range(2):
+    for i in range(3):
         C2 = updateCore(np.dot(U3, B2.T), U2, U1, X + M / mu, C2, V1, mu / 2, mu_)
         C1 = updateCore(np.dot(U4, B2.T), U2, U1, Y, C1, V1, lda, mu_)
         V1 = V1 - (C1 - C2)
-    B1 = C2
+    B1 = C1
     return B1
 
 def updateCore(S, H, W, HSI, C, V2, lda, mu):
-    # C = tl.tensor_to_vec(C.T)
-    # V2 = tl.tensor_to_vec(V2.T)
+    C = tl.tensor_to_vec(C.T)
+    V2 = tl.tensor_to_vec(V2.T)
     STS = np.dot(S.T, S)
     S1S, S1U, S1S_ = np.linalg.svd(STS)
+    # SU = np.diag(S1U)
+
     HS, HU, W_ = np.linalg.svd(np.dot(H.T, H))
+    # H1U = np.diag(HU)
+
     WS, WU, W_ = np.linalg.svd(np.dot(W.T, W))
+    # W1U = np.diag(WU)
 
+    temp1 = np.kron(S1U, HU)
+    temp1 = np.kron(temp1, WU)
+    #
 
-    D1Y = calu3TTM(HSI, W.T, H.T, S.T)
-    right = D1Y + mu * C - mu * V2
-
-    temp2 = calu3TTM(right, WS.T, HS.T, S1S.T)
-
-
-    temp = np.kron(S1U, HU)
-    temp = np.kron(temp, WU)
-    mid = temp + mu * np.ones(temp.shape)
+    # D1Y = calu3TTM(HSI, W.T, H.T, S.T)
+    # right =  tl.tensor_to_vec(D1Y.T) + mu * C - mu * V2
+    mid = lda * temp1 + mu * np.ones(temp1.shape)
     mid = np.reciprocal(mid)
 
+    D2Y = calu3TTM(HSI, W.T, H.T, S.T)
+    D2Y_ = tl.tensor_to_vec(D2Y.T)
 
-    # print("kron mid: ", t2 - t1)
+    right = np.reshape(lda * D2Y_ + mu * C - mu * V2, [D2Y.shape[2], D2Y.shape[1], D2Y.shape[0]]).T
 
-    mid = np.reshape(mid, temp2.shape, order='F')
-    temp3 = temp2 * mid
+    temp1 = calu3TTM(right, WS.T, HS.T, S1S.T)
+    temp1 = tl.tensor_to_vec(temp1.T)
+    temp1 = temp1 * mid
 
-    C1 = calu3TTM(temp3, WS, HS, S1S)
 
-    return C1
+    left = np.reshape(temp1, [S1S.shape[0], HS.shape[0], WS.shape[0]]).T
 
+    C2 = calu3TTM(left, WS, HS, S1S)
+
+    C2 = tl.tensor_to_vec(C2.T)
+
+    C2 = np.reshape(C2, [S.shape[1], H.shape[1], W.shape[1]]).T
+
+    return C2
+
+
+
+
+    #
+    #
+    # temp2 = calu3TTM(right, WS.T, HS.T, S1S.T)
+    #
+    #
+    # temp = np.kron(S1U, HU)
+    # temp = np.kron(temp, WU)
+    # mid = temp + mu * np.ones(temp.shape)
+    # mid = np.reciprocal(mid)
+    #
+    #
+    # # print("kron mid: ", t2 - t1)
+    #
+    # mid = np.reshape(mid, temp2.shape, order='F')
+    # temp3 = temp2 * mid
+    #
+    # C1 = calu3TTM(temp3, WS, HS, S1S)
+    #
+    # return C1
+    #

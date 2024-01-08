@@ -1,4 +1,4 @@
-
+import h5py
 import ray
 import numpy as np
 import time
@@ -11,7 +11,7 @@ from utils.tensor_function import HT_recover, matricize, ktensor, ttm, calu3TTM,
 
 from scipy.sparse import csr_matrix
 
-# @ray.remote(num_cpus=2)
+@ray.remote(num_cpus=2)
 class FactorActor:
     def __init__(self, k1, Y, patsize, rows, cols, nn, rank):
         print("init factors")
@@ -42,24 +42,38 @@ class FactorActor:
             diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(U1 ** 2, axis=0))))
             U1 = np.dot(U1, diag_matrix)
 
+            # hf = h5py.File("./data/U1.mat", 'r')
+            # U1 = np.array(hf["U1"]).T
+
             if R2 < len(ind):
                 U2 = np.random.random([len(ind), R2])
+                diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(U2 ** 2, axis=0))))
+                U2 = np.dot(U2, diag_matrix)
+                # hf = h5py.File("./data/U2.mat", 'r')
+                # U2 = np.array(hf["U2"]).T
             else:
                 U2 = np.random.random([len(ind), len(ind)])
-            diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(U2 ** 2, axis=0))))
-            U2 = np.dot(U2, diag_matrix)
+                diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(U2 ** 2, axis=0))))
+                U2 = np.dot(U2, diag_matrix)
+                # hf = h5py.File("./data/U2.mat", 'r')
+                # U2 = np.array(hf["U2"]).T
 
-            print(U2.shape)
+            # print(U2.shape)
 
 
             U3 = np.random.random([nn[2], R3])
             diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(U3 ** 2, axis=0))))
             U3 = np.dot(U3, diag_matrix)
+            # hf = h5py.File("./data/U3.mat", 'r')
+            # U3 = np.array(hf["U3"]).T
 
             # D
             U4 = np.random.random([Y.shape[2], R3])
             diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(U4 ** 2, axis=0))))
             U4 = np.dot(U4, diag_matrix)
+
+            # hf = h5py.File("./data/U4.mat", 'r')
+            # U4 = np.array(hf["U4"]).T
 
 
             # print(R1, len(ind))
@@ -69,16 +83,23 @@ class FactorActor:
                 diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(B1 ** 2, axis=0))))
                 B1 = np.dot(B1, diag_matrix)
                 B1 = np.reshape(B1, (R1, len(ind), RB1))
-                print(B1.shape)
+                # hf = h5py.File("./data/B1.mat", 'r')
+                # B1 = np.array(hf["B1"]).T
+
             else:
                 B1 = np.random.random([R1 * R2, RB1])
                 diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(B1 ** 2, axis=0))))
                 B1 = np.dot(B1, diag_matrix)
                 B1 = np.reshape(B1, (R1, R2, RB1))
+                # hf = h5py.File("./data/B1.mat", 'r')
+                # B1 = np.array(hf["B1"]).T
 
             B2 = np.random.random([RB1, R3])
             diag_matrix = np.diag(np.reciprocal(np.sqrt(np.sum(B2 ** 2, axis=0))))
             B2 = np.dot(B2, diag_matrix)
+
+            # hf = h5py.File("./data/B2.mat", 'r')
+            # B2 = np.array(hf["B2"]).T
 
             M2 = np.zeros(U4.shape)
 
@@ -104,6 +125,7 @@ class FactorActor:
             # print(ind)
             # print(X.shape)
             tt1 = indices2Patch(X, ind, patsize, rows, cols)
+            # tt1 = np.moveaxis(tt1, source=[0, 1, 2], destination=[0, 2, 1])
             tt1 = np.transpose(tt1, (0, 2, 1))
             SO1 = matricize(tt1)
 
@@ -128,50 +150,39 @@ class FactorActor:
             B2 = patch.factor.B2
             M2 = patch.factor.M2
 
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print(np.linalg.norm(cur - Ytt1))
+            # cur = HT_recover(U1, U2, U3, B1, B2)
+            # print(np.linalg.norm(cur - tt1))
+
 
             B2 = updateB2(U1, U2, U3, U4, B1, B2, YSO1[2], SO1[2], MM2[2], mu, lda, theta)
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print("Y", np.linalg.norm(cur - Ytt1))
-            cur = HT_recover(U1, U2, U3, B1, B2)
-            print("ZX", np.linalg.norm(cur - tt1))
+            # cur = HT_recover(U1, U2, U4, B1, B2)
+            # print("Y", np.linalg.norm(cur - Ytt1))
 
             # B2[B2 < 0] = 0
             B1 = updateB1(U1, U2, U3, U4, B1, B2, Ytt1, tt1, Mtt1, mu, lda, theta)
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print(np.linalg.norm(cur - Ytt1))
+            # cur = HT_recover(U1, U2, U4, B1, B2)
+            # print("B1", np.linalg.norm(cur - Ytt1))
             # B1[B1 < 0] = 0
 
             U2 = updateU2(U1, U2, U3, U4, B1, B2, YSO1[1], SO1[1], MM2[1], mu, lda, theta)
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print(np.linalg.norm(cur - Ytt1))
+            # cur = HT_recover(U1, U2, U4, B1, B2)
+            # print("U2", np.linalg.norm(cur - Ytt1))
 
 
             U1 = updateU1(U1, U2, U3, U4, B1, B2, YSO1[0], SO1[0], MM2[0], mu, lda, theta)
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print(np.linalg.norm(cur - Ytt1))
-
-            # U2
-
+            # cur = HT_recover(U1, U2, U4, B1, B2)
+            # print("U1", np.linalg.norm(cur - Ytt1))
 
             U3 = updateU3(U1, U2, U3, U4, B1, B2, SO1[2], MM2[2], mu, theta, R, M2)
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print(np.linalg.norm(cur - Ytt1))
+            # cur = HT_recover(U1, U2, U4, B1, B2)
+            # print("U3", np.linalg.norm(cur - Ytt1))
+
 
             U4 = updateU4(U1, U2, U3, U4, B1, B2, YSO1[2], mu, theta, lda, R, M2)
-            cur = HT_recover(U1, U2, U4, B1, B2)
-            print(np.linalg.norm(cur - Ytt1))
+            # cur = HT_recover(U1, U2, U4, B1, B2)
+            # print(np.linalg.norm(cur - Ytt1))
 
-
-
-
-
-
-
-
-
-            print()
+            # print()
 
             M2 = M2 + mu * (U4 - np.dot(R, U3))
 
@@ -220,9 +231,9 @@ class FactorActor:
 
         # self.E_Img = E_Img
         # return E_Img
-        # self.E_Img = sparseTensor
-        self.E_Img = E_Img
-        return E_Img
+        self.E_Img = sparseTensor
+        # self.E_Img = E_Img
+        # return E_Img
     def reduce(self, data):
         self.E_Img = self.E_Img + data
 

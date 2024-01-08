@@ -25,19 +25,19 @@ mband=4;
 % E = kron(B, A) * double(tenmat(C, [1 2]));
 
 
-% I_REF=imread('original_rosis.tif');
-% % I_REF=imread('dc5.tif');
+I_REF=imread('original_rosis.tif');
+% I_REF=imread('dc5.tif');
+
+I_REF=double(I_REF);
+% % 
+load LANDSAT.mat
+R=R(1:mband,1:size(I_REF,3));
 % 
-% I_REF=double(I_REF);
-% % % 
-% load LANDSAT.mat
-% R=R(1:mband,1:size(I_REF,3));
-% 
-    I_REF=imread('dc.tif');
-%     I_REF=double(I_REF(861:1280, 1:300,:));
-    I_REF=double(I_REF(861:910, 1:50,:));
-    load LANDSAT.mat
-    R=R(1:mband,1:size(I_REF,3));
+%     I_REF=imread('dc.tif');
+% %     I_REF=double(I_REF(861:1280, 1:300,:));
+%     I_REF=double(I_REF(861:910, 1:50,:));
+%     load LANDSAT.mat
+%     R=R(1:mband,1:size(I_REF,3));
 
 %     load Sandiego.mat
 %     Sandiego(:,:,[1:6 33:35 97 104:110 153:166 221:224 ]) = [];

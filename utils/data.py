@@ -23,13 +23,14 @@ def readData(filename):
     if(filename == "DC50"):
         hf = h5py.File(dir + "dc50.mat", 'r')
         HH = np.array(hf["I_REF"]).T
+        HH = HH[:, 0:40, :]
         nn = HH.shape
     elif filename == 'DC':
         hf = h5py.File(dir + "I_REF.mat", 'r')
         HH = np.array(hf["I_REF"]).T
         nn = HH.shape
     elif (filename == "P"):
-        hf = h5py.File(dir + "Pavia_HH.mat", 'r')
+        hf = h5py.File(dir + "pavia.mat", 'r')
         HH = np.array(hf["I_REF"]).T
         nn = HH.shape
         R = R[:, 0: nn[2]]
