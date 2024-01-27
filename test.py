@@ -1,94 +1,58 @@
-import tensorly as tl
+
+import findspark
+findspark.init()
+import pyspark
+from pyspark import SparkConf, SparkContext
 import numpy as np
-from utils.tensor_function import ttm
-# 创建一个 3x3x3 的张量
-# dim1, dim2, dim3 = 3, 3, 3
+import tensorly as tl
+conf = SparkConf().setMaster("local")
+conf.set("spark.executor.memory", "4g")
+conf.set("spark.driver.memory", "10g")  # 这里是增加jvm的内存
+conf.set("spark.driver.maxResultSize", "10g")  # 这里是最大显示结果，这里是提示我改的。
+
+sc = SparkContext(conf=conf)
+
+import random
+def change(x, y_broadcast):
+    x[0] = 2
+    print(y_broadcast.value)
+    return x
+main_list = []
+
+for i in range(100):
+    main_list.append(i)
+
+def add(iter):
+    t = np.random.random([10, 10])
+    t = tl.tensor(t)
+    return [t]
+# def tt(x):
+#     array = np.array([])
+#     for i in x:
+#         array.
 #
-# # 使用 arange 生成连续的值，然后将其重塑为三维张量
-# tensor = np.arange(dim1 * dim2 * dim3).reshape(dim1, dim2, dim3)
-# matrix = np.arange(dim1 * dim2).reshape(dim1, dim2)
-#
-# # print(tensor)
-# # print(matrix)
-#
-# res = ttm(tensor, matrix, 0)
-# # print(tensor)
-# # print(matrix)
+
+
+m = np.random.random([20, 10, 5])
+rdd = sc.parallelize(m.T, 4)
+rdd.map(lambda x: print(x.shape)).collect()
+
+
+
+x = rdd.mapPartitions(lambda x: add(x)).fold(0, lambda x, y: x + y)
+print(x)
+
+# for _ in range(10):  # 初始化10个元素
+#     random_list = random.sample(range(100), 3)  # 从0到99的范围内选择3个随机数
+#     print(random_list)
+#     main_list.append(random_list)
+# y_broadcast = sc.broadcast(3)
+# print('************************************************')
+# rdd = sc.parallelize(main_list, 4)
+# rdd2 = rdd.map(lambda x: change(x, y_broadcast)).cache()
+# res = rdd2.map(lambda x: x[2]).collect()
+# y_broadcast = sc.broadcast(4)
 # print(res)
-#
-# G = np.random.random([10, 40, 20])
-# U1 = np.random.random([100, 10])
-# U2 = np.random.random([100, 40])
-#
-# G = tl.tenalg.mode_dot(G, U1, mode=0)
-# G = tl.tenalg.mode_dot(G, U2, mode=1)
-#
-# print(G.shape)
-
-
-# T = np.random.random([100, 100, 10])
-# B = np.random.random([5, 100])
-# C = np.random.random([6, 100])
-#
-# T1 = tl.tenalg.mode_dot(T, B, mode=0)
-# T1 = tl.tenalg.mode_dot(T1, C, mode=1)
-# T1 = tl.unfold(T1, mode=2)
-# T2 = np.dot(tl.unfold(T, mode=2), np.kron(B, C).T)
-U1 = np.random.random([110, 10])
-U2 = np.random.random([120, 20])
-U3 = np.random.random([130, 30])
-B1 = np.random.random([10, 20, 30])
-B2 = np.random.random([30, 30])
-
-a = tl.tenalg.mode_dot(B1, U1, mode=0)
-a = tl.tenalg.mode_dot(a, U2, mode=1)
-# a = tl.tenalg.mode_dot(a, B2.T, mode=2)
-a = tl.tenalg.mode_dot(a, U3, mode=2)
-c = a
-
-#
-h = tl.tenalg.mode_dot(B1, U1, mode=0)
-h = tl.tenalg.mode_dot(h, U2, mode=1)
-# h = tl.tenalg.mode_dot(h, np.dot(B2, U3.T).T, mode=2)
-h = np.dot(U3, tl.unfold(h, mode=2))
-i = tl.fold(h, mode=2, shape=a.shape)
-j = tl.unfold(i, mode=2)
-
-
-
-
-b = tl.tenalg.mode_dot(B1, U2, mode=1)
-b = tl.tenalg.mode_dot(b, B2.T, mode=2)
-b = tl.tenalg.mode_dot(b, U3, mode=2)
-b = tl.tenalg.mode_dot(b, U1, mode=0)
-
-
-
-
-
-c = tl.unfold(a, mode=0)
-# d = np.dot(U1, tl.unfold(b, mode=0))
-
-
-e = tl.fold(c, mode=0, shape=a.shape)
-
-
-f = tl.unfold(a, mode=1)
-g = tl.fold(f, mode=1, shape=a.shape)
-
-
-
-
-print(np.sum(a - g))
-
-
-
-
-
-
-
-
-
-
-
+# print('************************************************')
+# rdd2.map(lambda x: print(x, y_broadcast.value)).collect()
 

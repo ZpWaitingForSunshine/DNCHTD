@@ -1,42 +1,39 @@
-import pickle
+# This is a sample Python script.
 import time
+
+# Press Shift+F10 to execute it or replace it with your code.
+# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from dataReader import readData, loads
+from NPTCP import NPTCP
+from NPTCP4 import NPTCP4
+import h5py
 import numpy as np
-import ray
-import sys
-sys.path.append('./utils')
-sys.path.append('./classes')
-sys.path.append('./actors')
-sys.path.append('./tasks')
-#
+import pickle
+from function import QualityIndices, PSNR3D
+def print_hi(name):
+    # Use a breakpoint in the code line below to debug your script.
+    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
-
-
-from utils.data import readData, loads
-from DNCHTD import demo
-from utils.measurement_function import QualityIndices, PSNR3D
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    # 初始化Ray
-    # ray.init(address="ray://10.37.129.13:10001",
-    #          runtime_env={"working_dir": "./"})
-    ray.init()
-    # read data 读取数据
-    I_REF, MSI, HSI, R = readData('DC')
+    #  读取数据
+    I_REF, MSI, HSI, R = readData('DC50')
 
-    PN = 90
-    Rank = 1
+    PN = 60
+    Rank = 80
     ratio = 5
     s = loads()
     t1 = time.time()
 
-    KK = [24, 80, 35, 35]
+    I_CTD = NPTCP(HSI, Rank, MSI, ratio, PN, R, s)
+    # I_CTD = NPTCP4(HSI, Rank, MSI, ratio, PN, R, s)
 
-    rate = 5
-    maxIter = 10
-    num = 1
+    # hf = h5py.File("./data/I_CTD.mat", 'r')
+    # I_CTD = np.array(hf["I_CTD"]).T
 
-    I_CTD = demo(HSI, KK, MSI, rate, PN, R, s, maxIter, num)
+    # hf = h5py.File("./data/I_REF.mat", 'r')
+    # I_REF = np.array(hf["I_REF"]).T
 
     QualityIndices(I_CTD, I_REF, ratio)
     AM = np.max(I_REF)
@@ -45,7 +42,11 @@ if __name__ == '__main__':
 
     t2 = time.time()
     print('time(s): ', t2 - t1)
-    filename = "./data/ " + str(psnr) +".pkl"
+    filename = "x_3order.pkl"
 
     with open(filename, 'wb') as file:
         pickle.dump(I_CTD, file)
+
+    # print_hi('PyCharm')
+
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
